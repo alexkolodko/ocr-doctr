@@ -1,6 +1,6 @@
 ## Run the demo
 
-Demo of Doctr OCR. [Source](https://github.com/mindee/doctr))
+Demo of Doctr OCR. [Source](https://github.com/mindee/doctr)
 
 ```bash
 cd demo
