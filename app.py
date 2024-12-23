@@ -77,7 +77,10 @@ def main(det_archs, reco_archs):
     disable_crop_orientation = st.sidebar.checkbox("Disable crop orientation detection", value=False)
     straighten_pages = st.sidebar.checkbox("Straighten pages", value=False)
     export_straight_boxes = st.sidebar.checkbox("Export as straight boxes", value=False)
+    show_page_delimiters = st.sidebar.checkbox("Show page delimiters", value=False)
     merge_lines = st.sidebar.checkbox("Merge text by lines", value=True)
+    merge_sentences = st.sidebar.checkbox("Merge sentences", value=False, 
+        help="Merge text that starts on one line and ends with a period on the next line")
     merge_paragraphs = st.sidebar.checkbox("Merge text into paragraphs", value=False)
     line_height_threshold = st.sidebar.slider("Line merge threshold", min_value=0.1, max_value=5.0, value=0.5, step=0.1, 
                                             help="Higher values will merge text that is further apart vertically")
@@ -87,7 +90,6 @@ def main(det_archs, reco_archs):
     bin_thresh = st.sidebar.slider("Binarization threshold", min_value=0.1, max_value=0.9, value=0.3, step=0.1)
     st.sidebar.write("\n")
     box_thresh = st.sidebar.slider("Box threshold", min_value=0.1, max_value=0.9, value=0.1, step=0.1)
-    st.sidebar.write("\n")
 
 
 
@@ -186,6 +188,38 @@ def main(det_archs, reco_archs):
                         # Join words in each line
                         page_text = [' '.join(line) for line in lines]
                         
+                        # After creating lines but before creating paragraphs
+                        if merge_sentences:
+                            merged_lines = []
+                            current_sentence = []
+                            
+                            for line in lines:
+                                line_text = ' '.join(line)
+                                
+                                if current_sentence:
+                                    # Add this line to current sentence
+                                    current_sentence.append(line_text)
+                                    
+                                    # If this line ends with period, finish the sentence
+                                    if line_text.strip().endswith('.'):
+                                        merged_lines.append(' '.join(current_sentence))
+                                        current_sentence = []
+                                else:
+                                    # If line ends with period, it's a complete sentence
+                                    if line_text.strip().endswith('.'):
+                                        merged_lines.append(line_text)
+                                    # Otherwise start a new sentence
+                                    else:
+                                        current_sentence.append(line_text)
+                            
+                            # Add any remaining incomplete sentence
+                            if current_sentence:
+                                merged_lines.append(' '.join(current_sentence))
+                            
+                            page_text = merged_lines
+                        else:
+                            page_text = [' '.join(line) for line in lines]
+                        
                         # Merge lines into paragraphs if enabled
                         if merge_paragraphs and page_text:
                             paragraphs = []
@@ -228,7 +262,10 @@ def main(det_archs, reco_archs):
                                 block_text.append(' '.join(line_words))
                             page_text.append('\n'.join(block_text))
                     
-                    all_pages_text.append(f"--- Page {idx + 1} ---\n{chr(10).join(page_text)}\n")
+                    if show_page_delimiters:
+                        all_pages_text.append(f"--- Page {idx + 1} ---\n{chr(10).join(page_text)}\n")
+                    else:
+                        all_pages_text.append(f"{chr(10).join(page_text)}\n")
                 
                 complete_text = '\n'.join(all_pages_text)
                 st.text_area("", complete_text, height=900)
