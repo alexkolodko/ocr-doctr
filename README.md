@@ -2,6 +2,9 @@
 
 Demo of Doctr OCR. [Source](https://github.com/mindee/doctr)
 
+Added in sidebar some functions to merge text and lines.
+
+
 ```bash
 cd demo
 pip install -r pt-requirements.txt
